@@ -1,0 +1,63 @@
+ModernCppLab
+Copyright (c) 2026 KearHarry
+
+============================================================
+ 许可协议 / License
+============================================================
+
+本项目 ModernCppLab（包括其源代码、代码骨架、测试，以及全部
+README 讲解与「面试追问」内容）采用
+「知识共享 署名—非商业性使用 4.0 国际」许可协议授权。
+
+This work — ModernCppLab, including its source code, code skeletons,
+tests, and all README explanations and interview Q&A content — is
+licensed under the Creative Commons Attribution-NonCommercial 4.0
+International License (CC BY-NC 4.0).
+
+  许可证摘要 / Human-readable summary:
+      https://creativecommons.org/licenses/by-nc/4.0/
+  许可证全文 / Full legal code:
+      https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+------------------------------------------------------------
+ 你可以自由地（You are free to）
+------------------------------------------------------------
+  • 共享 Share —— 以任何媒介或格式复制、发行本作品。
+  • 演绎 Adapt —— 修改、转换本作品，并基于本作品进行再创作。
+
+  （即：允许下载学习、允许修改与二次创作。）
+
+------------------------------------------------------------
+ 惟须遵守下列条件（Under the following terms）
+------------------------------------------------------------
+  • 署名 Attribution (BY)
+    你必须给出适当的署名，提供指向本许可协议的链接，并标明是否
+    对原作品作了修改。你必须注明原作者与项目出处——
+    “ModernCppLab，作者 KearHarry”及本仓库地址——且不得以任何
+    方式暗示许可人为你或你的使用方式背书。
+    （即：转载 / 分发须注明出处。）
+
+  • 非商业性使用 NonCommercial (NC)
+    你不得将本作品用于商业目的。“商业目的”指主要以获取商业
+    利益或金钱报酬为导向的使用。
+    （即：仅限学习与非商业用途，不得商用。）
+
+  • 没有附加限制 No additional restrictions
+    你不得适用法律术语或技术措施，从而限制他人做本许可协议
+    所允许的事情。
+
+------------------------------------------------------------
+ 声明 / Notices
+------------------------------------------------------------
+本作品按“现状（AS IS）”提供，不附带任何明示或默示的担保，
+包括但不限于适销性、特定用途适用性与不侵权的担保。在适用
+法律允许的最大范围内，作者不对因使用本作品而产生的任何索赔、
+损害或其他责任负责。
+
+如需将本作品用于商业用途，请联系作者 KearHarry
+<Feixiangwann@gmail.com> 另行获取商业授权。
+
+To view a copy of this license, visit
+https://creativecommons.org/licenses/by-nc/4.0/
+or send a letter to Creative Commons, PO Box 1866, Mountain View,
+CA 94042, USA.
