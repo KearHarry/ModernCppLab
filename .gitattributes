@@ -1,0 +1,12 @@
+# 统一行尾：仓库内一律存 LF，检出时按平台自动转换，避免跨平台 diff 噪音
+* text=auto
+
+# 明确指定脚本行尾：shell 必须 LF，PowerShell 用 CRLF
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+
+# 源码与文档按文本处理
+*.hpp  text
+*.cpp  text
+*.md   text
+*.txt  text

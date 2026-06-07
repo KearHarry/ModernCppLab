@@ -1,0 +1,46 @@
+# 构建产物
+/build/
+build*/
+cmake-build-*/
+out/
+.testbin/
+
+# 编译/链接中间文件
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.pdb
+*.ilk
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+compile_commands.json
+
+# IDE / 编辑器
+.vs/
+.vscode/
+.idea/
+*.user
+*.swp
+.DS_Store
+
+# Claude Code 本地设置（机器/用户私有，不入库）
+.claude/settings.local.json
+
+# 开发期脚手架 / 草稿（参考实现、临时编译产物，不入库）
+.tmp_sol/
+.tmp_check/
+.tmp*/
+
+# 临时抓取文件
+.transcript_tail.txt
