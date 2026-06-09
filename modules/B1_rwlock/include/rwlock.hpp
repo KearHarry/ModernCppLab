@@ -62,7 +62,9 @@ public:
     // ===============================================================
     void lock_shared() {
         // TODO（骨架：先退化成"独占"——读也串行化；并发读用例会红，但安全不崩）
-        mtx_.lock();
+        std::unique_lock<std::mutex> lk(mtx_);
+        cv_.wait(lk, [&]{ return !writer_ && waiting_writers_ == 0; });
+        ++readers_;
     }
 
     // ===================== TODO(B1-2) unlock_shared =================
@@ -72,7 +74,8 @@ public:
     // ===============================================================
     void unlock_shared() {
         // TODO
-        mtx_.unlock();
+        std::unique_lock<std::mutex> lk(mtx_);
+        if (--readers_ == 0) cv_.notify_all();
     }
 
     // ===================== TODO(B1-3) lock（写者）===================
@@ -85,7 +88,11 @@ public:
     // ===============================================================
     void lock() {
         // TODO（骨架：退化成独占锁）
-        mtx_.lock();
+        std::unique_lock<std::mutex> lk(mtx_);
+        ++waiting_writers_;
+        cv_.wait(lk, [&]{ return !writer_ && readers_ == 0; });
+        --waiting_writers_;
+        writer_ = true;
     }
 
     // ===================== TODO(B1-4) unlock（写者）=================
@@ -96,7 +103,9 @@ public:
     // ===============================================================
     void unlock() {
         // TODO
-        mtx_.unlock();
+        std::unique_lock<std::mutex> lk(mtx_);
+        writer_ = false;
+        cv_.notify_all();
     }
 
     // ---- RAII 守卫：构造上锁、析构解锁，异常安全。已给好 ----

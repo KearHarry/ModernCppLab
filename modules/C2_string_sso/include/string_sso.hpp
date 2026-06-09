@@ -62,8 +62,13 @@ public:
     //     size_ = len;
     // ===============================================================
     String(const char* s) {
-        // TODO
-        (void)s;
+        std::size_t len = std::strlen(s);
+        if (len > kInlineCap) {
+            data_ = new char[len + 1];
+            capacity_ = len;
+        }
+        std::memcpy(data_, s, len + 1);
+        size_ = len;
     }
 
     // ===================== TODO(C2-6) 拷贝构造（深拷贝） =============
@@ -76,8 +81,12 @@ public:
     //     size_ = other.size_;
     // ===============================================================
     String(const String& other) {
-        // TODO
-        (void)other;
+        if (other.size_ > kInlineCap) {
+            data_ = new char[other.size_ + 1];
+            capacity_ = other.size_;
+        }
+        std::memcpy(data_, other.data_, other.size_ + 1);
+        size_ = other.size_;
     }
 
     // ===================== TODO(C2-7) 移动构造 =======================
@@ -101,8 +110,20 @@ public:
     //   }
     // ===============================================================
     String(String&& other) noexcept {
-        // TODO
-        (void)other;
+        if(other.is_small()) {
+            std::memcpy(buf_, other.buf_, other.size_ + 1);
+            data_ = buf_;
+            size_ = other.size_;
+            capacity_ = kInlineCap;
+        } else {
+            data_ = other.data_;
+            size_ = other.size_;
+            capacity_ = other.capacity_;
+            other.data_ = other.buf_;
+            other.buf_[0] = '\0';
+            other.size_ = 0;
+            other.capacity_ = kInlineCap;
+        }
     }
 
     // ===================== TODO(C2-8) 拷贝赋值 =======================
@@ -114,8 +135,16 @@ public:
     //   6) return *this;
     // ===============================================================
     String& operator=(const String& other) {
-        // TODO
-        (void)other;
+        if(this == &other) return *this;
+        if(!is_small()) delete[] data_;
+        data_ = buf_;
+        capacity_ = kInlineCap;
+        if(other.size_ > kInlineCap) {
+            data_ = new char[other.size_ + 1];
+            capacity_ = other.size_;
+        }
+        std::memcpy(data_, other.data_, other.size_ + 1);
+        size_ = other.size_;
         return *this;
     }
 
@@ -127,8 +156,22 @@ public:
     //   4) return *this;
     // ===============================================================
     String& operator=(String&& other) noexcept {
-        // TODO
-        (void)other;
+        if (this == &other) return *this;
+        if (!is_small()) delete[] data_;
+        if (other.is_small()) {
+            std::memcpy(buf_, other.buf_, other.size_ + 1);
+            data_ = buf_;
+            size_ = other.size_;
+            capacity_ = kInlineCap;
+        } else {
+            data_ = other.data_;
+            size_ = other.size_;
+            capacity_ = other.capacity_;
+            other.data_ = other.buf_;
+            other.buf_[0] = '\0';
+            other.size_ = 0;
+            other.capacity_ = kInlineCap;
+        }
         return *this;
     }
 
@@ -137,7 +180,7 @@ public:
     //   if (!is_small()) delete[] data_;
     // ===============================================================
     ~String() {
-        // TODO
+        if(!is_small()) delete[] data_;
     }
 
     // ===================== TODO(C2-2) reserve ========================
@@ -151,8 +194,12 @@ public:
     //   （注意：执行完后 data_ != buf_，自动变成"长串模式"。）
     // ===============================================================
     void reserve(std::size_t newcap) {
-        // TODO
-        (void)newcap;
+        if (newcap <= capacity_) return;
+        char* newdata = new char[newcap + 1];
+        std::memcpy(newdata, data_, size_ + 1);
+        if(!is_small()) delete[] data_;
+        data_ = newdata;
+        capacity_ = newcap;
     }
 
     // ===================== TODO(C2-3) push_back ======================
@@ -163,8 +210,10 @@ public:
     //   ++size_;
     // ===============================================================
     void push_back(char c) {
-        // TODO
-        (void)c;
+        if(size_ == capacity_) reserve(capacity_ == 0 ? 1 : capacity_ * 2);
+        data_[size_] = c;
+        data_[size_ + 1] = '\0';
+        ++size_;
     }
 
     // ===================== TODO(C2-4) append =========================
@@ -175,13 +224,14 @@ public:
     //   size_ += len;
     // ===============================================================
     void append(const char* s) {
-        // TODO
-        (void)s;
+        std::size_t len = std::strlen(s);
+        if(size_ + len > capacity_) reserve(size_ + len);
+        std::memcpy(data_ + size_, s, len+1);
+        size_ += len;
     }
 
     // ---- 下面是已给出的部分，无需修改 ----
 
-    // 是否处于"短串（内联）模式"。教学用：方便测试验证 SSO 是否真的生效。
     bool is_small() const noexcept { return data_ == buf_; }
 
     const char* c_str() const noexcept { return data_; }

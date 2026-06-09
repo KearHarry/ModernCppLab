@@ -67,9 +67,10 @@ public:
     //   return &it->second->second;                      // 结点的 .second 就是 value
     // =================================================================
     V* get(const K& key) {
-        // TODO
-        (void)key;
-        return nullptr;
+        auto it = index_.find(key);
+        if (it == index_.end()) return nullptr;
+        items_.splice(items_.begin(), items_, it->second);
+        return &it->second->second;
     }
 
     // ===================== TODO(D1-2) put ============================
@@ -85,9 +86,15 @@ public:
     //   if (items_.size() > capacity_) evict_lru_();     //    超容 → 淘汰表尾
     // =================================================================
     void put(const K& key, const V& value) {
-        // TODO
-        (void)key;
-        (void)value;
+        auto it = index_.find(key);
+        if (it != index_.end()) {
+            it->second->second = value;
+            items_.splice(items_.begin(), items_, it->second);
+            return;
+        }
+        items_.emplace_front(key, value);
+        index_[key] = items_.begin();
+        if (items_.size() > capacity_) evict_lru_();
     }
 
     // ---- 下面是已给出的部分，无需修改 ----
@@ -109,7 +116,8 @@ private:
     //   items_.pop_back();                   // 再从链表删掉表尾结点
     // =================================================================
     void evict_lru_() {
-        // TODO
+        index_.erase(items_.back().first);
+        items_.pop_back();
     }
 
     std::size_t                       capacity_;   // 容量上限

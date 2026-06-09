@@ -64,8 +64,13 @@ public:
     //   这里先按"拷贝构造不抛"处理，理解主线即可。
     // ===============================================================
     Vector(const Vector& other) {
-        // TODO
-        (void)other;
+        if (other.size_ == 0) return;
+        data_ = allocate_(other.size_);
+        for (size_t i = 0; i < other.size_; ++i) {
+            new (data_ + i) T(other.data_[i]);
+        }
+        size_ = other.size_;
+        capacity_ = other.size_;
     }
 
     // ===================== TODO(C1-7) 移动构造 =======================
@@ -75,8 +80,12 @@ public:
     //   （移动不分配、不拷贝元素，O(1)；别忘了把源置空，否则析构会重复释放。）
     // ===============================================================
     Vector(Vector&& other) noexcept {
-        // TODO
-        (void)other;
+        data_ = other.data_;
+        size_ = other.size_;
+        capacity_ = other.capacity_;
+        other.data_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
     }
 
     // ===================== TODO(C1-8) 拷贝赋值（copy-and-swap） ========
@@ -88,8 +97,9 @@ public:
     //   return *this;
     // ===============================================================
     Vector& operator=(const Vector& other) {
-        // TODO
-        (void)other;
+        if(this == &other) return *this;
+        Vector tmp(other);
+        swap(tmp);
         return *this;
     }
 
@@ -100,8 +110,17 @@ public:
     //   4) return *this;
     // ===============================================================
     Vector& operator=(Vector&& other) noexcept {
-        // TODO
-        (void)other;
+        if(this == &other) return *this;
+        for (size_t i = 0; i < size_; ++i) {
+            data_[i].~T();
+        }
+        deallocate_(data_);
+        data_ = other.data_;
+        size_ = other.size_;
+        capacity_ = other.capacity_;
+        other.data_ = nullptr;
+        other.size_ = 0;
+        other.capacity_ = 0;
         return *this;
     }
 
@@ -112,7 +131,10 @@ public:
     //   （顺序很重要：必须先析构对象，再还内存。）
     // ===============================================================
     ~Vector() {
-        // TODO
+        for (size_t i = 0; i < size_; ++i) {
+            data_[i].~T();
+        }
+        deallocate_(data_);
     }
 
     // ===================== TODO(C1-1) reserve ========================
@@ -128,8 +150,17 @@ public:
     //   （size_ 不变——元素个数没变，只是搬了家。）
     // ===============================================================
     void reserve(size_type newcap) {
-        // TODO
-        (void)newcap;
+        if (newcap <= capacity_) return;
+        T* newdata = allocate_(newcap);
+        for (size_t i = 0; i < size_; ++i) {
+            new (newdata + i) T(std::move_if_noexcept(data_[i]));
+        }
+        for (size_t i = 0; i < size_; ++i) {
+            data_[i].~T();
+        }
+        deallocate_(data_); 
+        data_ = newdata;
+        capacity_ = newcap;
     }
 
     // ===================== TODO(C1-2) push_back ======================
@@ -145,11 +176,15 @@ public:
     // ===============================================================
     void push_back(const T& value) {
         // TODO
-        (void)value;
+        if(size_ == capacity_) reserve(capacity_ == 0 ? 1 : capacity_ * 2);
+        new (data_ + size_) T(value);
+        ++size_;
     }
     void push_back(T&& value) {
         // TODO
-        (void)value;
+        if(size_ == capacity_) reserve(capacity_ == 0 ? 1 : capacity_ * 2);
+        new (data_ + size_) T(std::move(value));
+        ++size_;
     }
 
     // ===================== TODO(C1-3) pop_back =======================
@@ -160,6 +195,9 @@ public:
     // ===============================================================
     void pop_back() {
         // TODO
+        data_[size_ - 1].~T();
+        --size_;
+
     }
 
     // ===================== TODO(C1-4) clear ==========================
@@ -169,6 +207,10 @@ public:
     // ===============================================================
     void clear() noexcept {
         // TODO
+        for (size_t i = 0; i < size_; ++i) {
+            data_[i].~T();
+        }
+        size_ = 0;
     }
 
     // ---- 下面是已给出的部分，无需修改 ----

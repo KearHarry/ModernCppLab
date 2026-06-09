@@ -56,8 +56,11 @@ public:
     //      （可以先 lk.unlock() 再 notify，减少"唤醒了却抢不到锁"的概率；锁内 notify 也对）
     // =============================================================
     void push(T value) {
-        // TODO
-        (void)value;
+        std::unique_lock<std::mutex> lk(mtx_);
+        not_full_.wait(lk,[this]{return q_.size() < capacity_ || closed_;});
+        if (closed_) return;
+        q_.push(std::move(value));
+        not_empty_.notify_one();
     }
 
     // ===================== TODO(B2-2) pop ========================
@@ -72,9 +75,13 @@ public:
     //   要点：先取完残留数据，只有"已关闭且为空"才返回 false，保证不丢数据。
     // =============================================================
     bool pop(T& out) {
-        // TODO
-        (void)out;
-        return false;
+        std::unique_lock<std::mutex> lk(mtx_);
+        not_empty_.wait(lk,[this]{return !q_.empty() || closed_;});
+        if (q_.empty()) return false;
+        out = std::move(q_.front());
+        q_.pop();
+        not_full_.notify_one();
+        return true;
     }
 
     // ===================== TODO(B2-3) close ======================
@@ -83,7 +90,9 @@ public:
     //   2) 解锁后 not_empty_.notify_all(); not_full_.notify_all();
     // =============================================================
     void close() {
-        // TODO
+        closed_ = true;
+        not_empty_.notify_all();
+        not_full_.notify_all();
     }
 
     // ---- 下面是辅助查询函数，已给出 ----

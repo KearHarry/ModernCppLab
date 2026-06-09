@@ -90,7 +90,7 @@ class Function<R(Args...)> {
         R invoke(Args... args) const override {
             // TODO
             (void)sizeof...(args);   // 占位：避免未使用形参告警
-            return R{};              // 骨架返回默认值；实现后改为 return f_(args...);
+            return f_(args...);              // 骨架返回默认值；实现后改为 return f_(args...);
         }
 
         // ===================== TODO(A4-2) clone =====================
@@ -100,7 +100,7 @@ class Function<R(Args...)> {
         // ============================================================
         std::unique_ptr<CallableBase> clone() const override {
             // TODO
-            return nullptr;
+            return std::make_unique<CallableImpl>(f_);
         }
     };
 
@@ -124,7 +124,8 @@ public:
               class = std::enable_if_t<!std::is_same_v<std::decay_t<F>, Function>>>
     Function(F f) {
         // TODO
-        (void)f;  // 占位：实现后删掉，改为把 f 包进 CallableImpl<F> 存入 callable_
+         // 占位：实现后删掉，改为把 f 包进 CallableImpl<F> 存入 callable_
+        callable_ = std::make_unique<CallableImpl<F>>(std::move(f));
     }
 
     // ---- 拷贝：用虚函数 clone() 多态地深拷贝；空对象拷成空对象 ----
@@ -147,7 +148,7 @@ public:
     R operator()(Args... args) const {
         // TODO
         (void)sizeof...(args);
-        return R{};  // 骨架返回默认值；实现后改为 return callable_->invoke(args...);
+        return callable_->invoke(args...);  // 骨架返回默认值；实现后改为 return callable_->invoke(args...);
     }
 
     // 是否已绑定目标（仿 std::function 的显式 bool 转换）。

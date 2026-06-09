@@ -43,8 +43,11 @@ struct RemoveReference {
 //   2) 当 T 是右值引用 U&& 时，type 应为 U
 //
 //   写法（取消注释并补全）：
-//     template <class U> struct RemoveReference<U&>  { using type = U; };
-//     template <class U> struct RemoveReference<U&&> { using type = U; };
+template <class U> 
+struct RemoveReference<U&>  { using type = U; };
+
+template <class U> 
+struct RemoveReference<U&&> { using type = U; };
 // ================================================================================
 
 // 别名模板：让你能写 RemoveReferenceT<T> 而不是 typename RemoveReference<T>::type
@@ -66,6 +69,9 @@ struct IsSame {
 //   template <class T> struct IsSame<T, T> { static constexpr bool value = true; };
 // ==========================================================================
 
+template<class T>
+struct IsSame<T, T> { static constexpr bool value = true; };
+
 template <class A, class B>
 inline constexpr bool IsSameV = IsSame<A, B>::value;
 
@@ -85,6 +91,10 @@ struct Conditional {
 //   template <class T, class F> struct Conditional<false, T, F> { using type = F; };
 // ===============================================================================
 
+
+template <class T, class F>
+struct Conditional<false, T, F> { using type = F; };
+
 template <bool B, class T, class F>
 using ConditionalT = typename Conditional<B, T, F>::type;
 
@@ -102,9 +112,9 @@ struct HasSize : std::false_type {};
 //   从而匹配上主模板第二参数的默认 void；若 .size() 不存在，decltype 替换失败
 //   → 这个偏特化被丢弃（SFINAE）→ 落回主模板的 false。
 //
-//   template <class T>
-//   struct HasSize<T, std::void_t<decltype(std::declval<T&>().size())>>
-//       : std::true_type {};
+  template <class T>
+  struct HasSize<T, std::void_t<decltype(std::declval<T&>().size())>>
+      : std::true_type {};
 //
 //   提示：std::declval<T&>() 在 decltype 里"假装"造一个 T 的引用用于探测，
 //        不会真的构造对象（只能用于不求值语境）。
@@ -124,7 +134,7 @@ auto sum(Ts... xs) {
     //   return (0 + ... + xs);
     // 想一想：(xs + ...) 这种一元折叠，在 sum() 不传参时为什么会编译报错？
     // =====================================================
-    return 0;  // ← 占位
+    return (0 + ... + xs);
 }
 
 // =============================================================================
@@ -137,7 +147,7 @@ bool all_of(Ts... flags) {
     // 用折叠表达式把所有参数用 && 连起来：
     //   return (... && flags);   // 一元左折叠；空包时结果为 true（&& 的单位元）
     // =====================================================
-    return true;  // ← 占位
+    return (... && flags);  // ← 占位
 }
 
 // =============================================================================
@@ -149,7 +159,7 @@ constexpr std::size_t count(const Ts&...) {
     // ===================== TODO(A3-7) =====================
     // 返回参数包里参数的个数。提示：sizeof...(Ts)
     // =====================================================
-    return 0;  // ← 占位
+    return sizeof...(Ts);  // ← 占位
 }
 
 // =============================================================================
@@ -165,7 +175,7 @@ constexpr std::size_t count(const Ts&...) {
 //        若不合法，concept 求值为 false（不会硬报错）。
 // =====================================================
 template <class T>
-concept Addable = true;  // ← 占位：请替换成 requires(...) 约束
+concept Addable = requires(T a) { a + a; };  // ← 占位：请替换成 requires(...) 约束
 
 // twice：只接受满足 Addable 的类型（已给出，体会 concept 怎么约束模板参数）。
 template <Addable T>
