@@ -99,8 +99,12 @@ public:
     //    head_.prev = n;
     // ===============================================================
     void push_back(T& obj) {
-        // TODO
-        (void)obj;
+        ListNode* n = &static_cast<ListNode&>(obj);
+        ListNode* last = head_.prev;
+        n->prev = last;
+        n->next = &head_;
+        last->next = n;
+        head_.prev = n;
     }
 
     // ===================== TODO(C5-2) unlink ========================
@@ -113,8 +117,11 @@ public:
     //    n->next = nullptr;
     // ===============================================================
     static void unlink(T& obj) {
-        // TODO
-        (void)obj;
+        ListNode* n = &static_cast<ListNode&>(obj);
+        n->prev->next = n->next;
+        n->next->prev = n->prev;
+        n->prev = nullptr;
+        n->next = nullptr;
     }
 
     // ===================== TODO(C5-3) pop_front =====================
@@ -125,8 +132,10 @@ public:
     //    return static_cast<T*>(first);
     // ===============================================================
     T* pop_front() {
-        // TODO
-        return nullptr;
+        if (empty()) return nullptr;
+        ListNode* first = head_.next;
+        unlink(static_cast<T&>(*first));
+        return static_cast<T*>(first);
     }
 };
 

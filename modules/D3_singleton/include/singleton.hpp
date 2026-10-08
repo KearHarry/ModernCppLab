@@ -66,8 +66,8 @@ public:
     //   return inst;
     // ===============================================================
     static MeyersSingleton& instance() {
-        // TODO：骨架先"每次都新建一个"——这并不是单例（地址不同、计数>1），测试会红。
-        return *new MeyersSingleton();
+        static MeyersSingleton inst;
+        return inst;
     }
 
     void set(int v) noexcept { value_ = v; }
@@ -93,8 +93,8 @@ public:
     //   return *instance_;
     // ===============================================================
     static CallOnceSingleton& instance() {
-        // TODO：骨架先"每次都新建一个"——测试会红。
-        return *new CallOnceSingleton();
+        std::call_once(once_, [] { instance_ = new CallOnceSingleton(); });
+        return *instance_;
     }
 
     void set(int v) noexcept { value_ = v; }
@@ -131,8 +131,16 @@ public:
     //   return *p;
     // ===============================================================
     static DclpSingleton& instance() {
-        // TODO：骨架先"每次都新建一个"——测试会红。
-        return *new DclpSingleton();
+        DclpSingleton* p = instance_.load(std::memory_order_acquire);   
+        if (!p) {
+            std::lock_guard<std::mutex> lk(mtx_);
+            p = instance_.load(std::memory_order_relaxed);
+            if (!p) {
+                p = new DclpSingleton();
+                instance_.store(p, std::memory_order_release);
+            }
+        }
+        return *p;
     }
 
     void set(int v) noexcept { value_ = v; }

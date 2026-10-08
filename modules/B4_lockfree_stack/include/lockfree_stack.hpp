@@ -115,8 +115,14 @@ public:
     //    size_.fetch_add(1, std::memory_order_relaxed);
     // ===============================================================
     void push(T value) {
-        // TODO
-        (void)value;  // 骨架：什么都不做（head_ 保持为空）
+        Node* n = new Node(std::move(value));
+        n->next = head_.load(std::memory_order_relaxed);
+        while (!head_.compare_exchange_weak(
+            n->next, n,
+            std::memory_order_release,
+            std::memory_order_relaxed)) {
+        }
+        size_.fetch_add(1, std::memory_order_relaxed);  
     }
 
     // ===================== TODO(B4-2) pop ===========================
@@ -135,8 +141,17 @@ public:
     // ===============================================================
     bool pop(T& out) {
         // TODO
-        (void)out;
-        return false;  // 骨架：永远报告"空"
+        Node* old = head_.load(std::memory_order_acquire);
+        while (old && !head_.compare_exchange_weak(
+            old, old->next,
+            std::memory_order_acquire,
+            std::memory_order_relaxed)) {
+        }
+        if (!old) return false;
+        out = std::move(old->value);
+        delete old;
+        size_.fetch_sub(1, std::memory_order_relaxed);
+        return true;
     }
 
     // 是否为空（以原子读 head_ 为准）。

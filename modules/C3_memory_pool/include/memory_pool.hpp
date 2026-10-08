@@ -100,7 +100,15 @@ class FixedPool {
     //    free_count_ += blocks_per_chunk_;
     // ===============================================================
     void grow_() {
-        // TODO
+        auto chunk = std::make_unique<std::byte[]>(block_size_ * blocks_per_chunk_);
+        std::byte* base = chunk.get();
+        for ( std::size_t i = 0; i < blocks_per_chunk_; ++i) {
+            auto* node = reinterpret_cast<FreeNode*>(base + i * block_size_);
+            node->next = free_list_;
+            free_list_ = node;
+        }
+        chunks_.push_back(std::move(chunk));
+        free_count_ += blocks_per_chunk_;
     }
 
 public:
@@ -125,8 +133,12 @@ public:
     //    return node;            // 当作 void* 返回（调用方再 placement new 构造对象）
     // ===============================================================
     void* allocate() {
-        // TODO
-        return nullptr;  // 骨架：永远返回空（测试会先 ASSERT_NE 挡住，不会解引用）
+        if(!free_list_) grow_();
+        FreeNode* node = free_list_;
+        free_list_ = node->next;
+        --free_count_;
+        ++outstanding_;
+        return node;    
     }
 
     // ===================== TODO(C3-2) deallocate ====================
@@ -139,8 +151,12 @@ public:
     //    --outstanding_;
     // ===============================================================
     void deallocate(void* p) {
-        // TODO
-        (void)p;  // 骨架：什么都不做
+        if(!p) return;
+        auto* node = static_cast<FreeNode*>(p);
+        node->next = free_list_;
+        free_list_ = node;
+        ++free_count_;
+        --outstanding_;
     }
 
     // ---- 以下为观测接口（已给好，测试用来核对计数）----

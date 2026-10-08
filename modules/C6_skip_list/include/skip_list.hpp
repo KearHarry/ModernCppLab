@@ -105,9 +105,13 @@ public:
     //    return nullptr;
     // ===============================================================
     const int* find(int key) const {
-        // TODO
-        (void)key;
-        return nullptr;   // 骨架：恒未找到
+        Node* x = head_;
+        for (int i = level_ - 1; i >= 0; --i) {
+            while (x->forward[i] && x->forward[i]->key < key) x = x->forward[i];
+        }
+        x = x->forward[0];
+        if (x && x->key == key) return &x->value;
+        return nullptr;
     }
 
     // ===================== TODO(C6-2) insert ========================
@@ -130,8 +134,22 @@ public:
     //    ++size_;
     // ===============================================================
     void insert(int key, int value) {
-        // TODO
-        (void)key; (void)value;
+        std::vector<Node*> update(kMaxLevel, head_);
+        Node* x = head_;
+        for (int i = level_ - 1; i >= 0; --i) {
+            while (x->forward[i] && x->forward[i]->key < key) x = x->forward[i];
+            update[i] = x;
+        }
+        Node* c = update[0]->forward[0];
+        if (c && c->key == key) { c->value = value; return; }
+        int lvl = random_level();
+        if (lvl > level_) level_ = lvl;
+        Node* n = new Node(key, value, lvl);
+        for (int i = 0; i < lvl; ++i) {
+            n->forward[i]         = update[i]->forward[i];
+            update[i]->forward[i] = n;
+        }
+        ++size_;
     }
 
     // ===================== TODO(C6-3) erase =========================
@@ -154,9 +172,22 @@ public:
     //    return true;
     // ===============================================================
     bool erase(int key) {
-        // TODO
-        (void)key;
-        return false;   // 骨架：恒删除失败
+        std::vector<Node*> update(kMaxLevel, head_);
+        Node* x = head_;
+        for (int i = level_ - 1; i >= 0; --i) {
+            while (x->forward[i] && x->forward[i]->key < key) x = x->forward[i];
+            update[i] = x;
+        }
+        Node* c = update[0]->forward[0];
+        if (!c || c->key != key) return false;
+        for (int i = 0; i < level_; ++i) {
+            if (update[i]->forward[i] != c) break;
+            update[i]->forward[i] = c->forward[i];
+        }
+        delete c;
+        while (level_ > 1 && head_->forward[level_ - 1] == nullptr) --level_;
+        --size_;
+        return true;
     }
 
     bool contains(int key) const { return find(key) != nullptr; }  // 已给好

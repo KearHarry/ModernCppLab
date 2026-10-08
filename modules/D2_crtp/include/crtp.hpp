@@ -66,16 +66,14 @@ struct CrtpShape {
     //   全程编译期确定，无 vtable）
     // ===============================================================
     double area() const {
-        // TODO
-        return 0.0;
+        return static_cast<const Derived*>(this)->area_impl();
     }
 
     // ===================== TODO(D2-2) name 静态分派 =================
     //      return static_cast<const Derived*>(this)->name_impl();
     // ===============================================================
     const char* name() const {
-        // TODO
-        return "?";
+        return static_cast<const Derived*>(this)->name_impl();
     }
 
     // 【已给好】基类复用派生行为的范例：缩放面积 = k × area()。
@@ -124,9 +122,9 @@ struct RectS : CrtpShape<RectS>, Counted<RectS> {
 // ===============================================================
 template <class Derived>
 double sum_areas(const std::vector<Derived>& items) {
-    // TODO
-    (void)items;
-    return 0.0;
+    double sum = 0.0;
+    for (const auto& s : items) sum += s.area();
+    return sum;
 }
 
 } // namespace cppbc

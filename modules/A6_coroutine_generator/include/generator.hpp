@@ -62,8 +62,7 @@ public:
         //        std::coroutine_handle<promise_type>::from_promise(*this) };
         // ===============================================================
         Generator get_return_object() {
-            // TODO
-            return Generator{};   // 骨架：返回空盒子（无 handle）→ 序列为空，靠 ASSERT 挡住
+            return Generator{std::coroutine_handle<promise_type>::from_promise(*this)};
         }
 
         // 启动即挂起 / 结束后挂起：惰性 + 让外部读完状态再销毁。已给好。
@@ -76,9 +75,8 @@ public:
         //    return {};                 // std::suspend_always
         // ===============================================================
         std::suspend_always yield_value(T v) {
-            // TODO
-            (void)v;
-            return {};   // 骨架：没存值 → 即便能跑也吐默认值，断言不过
+            current_ = std::move(v);
+            return {};
         }
 
         void return_void() noexcept {}
@@ -88,7 +86,7 @@ public:
         //    exc_ = std::current_exception();
         // ===============================================================
         void unhandled_exception() {
-            // TODO
+            exc_ = std::current_exception();
         }
     };
 

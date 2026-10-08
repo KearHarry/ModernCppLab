@@ -50,7 +50,7 @@
 ## 如何验证
 ```powershell
 cmake --build build -j
-ctest --test-dir build -R A1 --output-on-failure
+ctest --test-dir build -R '^A1_' --output-on-failure
 ```
 测试覆盖：完美转发的左值→拷贝/右值→移动、深拷贝的独立性、移动后源被清空、自赋值安全，以及用 `static_assert` 检查移动操作是 `noexcept`。
 

@@ -173,29 +173,40 @@ inline void report_failure(const char* file, int line, const std::string& msg) {
         }                                                                        \
     } while (0)
 
+// 二元比较要把两侧表达式各求值一次并保存结果。旧版宏在失败消息中再次展开
+// a/b；若参数是 counter()、pop() 之类带副作用的调用，一次失败会悄悄执行
+// 第二遍，继而污染后续断言。这里先绑定局部引用，再比较和打印同一份结果。
+#define TF_BINARY_CHECK(a, b, op, fatal, macro_name, failure_relation)          \
+    do {                                                                        \
+        ++::tf::total_checks();                                                  \
+        auto&& tf_binary_lhs_ = (a);                                             \
+        auto&& tf_binary_rhs_ = (b);                                             \
+        if (!(tf_binary_lhs_ op tf_binary_rhs_)) {                               \
+            ++::tf::current_failures();                                          \
+            std::ostringstream tf_binary_oss_;                                   \
+            tf_binary_oss_ << macro_name "(" #a ", " #b ")  实际: "          \
+                           << ::tf::repr(tf_binary_lhs_) << failure_relation     \
+                           << ::tf::repr(tf_binary_rhs_);                        \
+            ::tf::report_failure(__FILE__, __LINE__, tf_binary_oss_.str());      \
+            if (fatal) throw ::tf::AssertionFailure{};                           \
+        }                                                                        \
+    } while (0)
+
 // ---- 非致命检查（失败后继续执行本用例） ------------------------------------
 #define EXPECT_TRUE(cond)   TF_CHECK((cond),  false, "EXPECT_TRUE(" #cond ") 为假")
 #define EXPECT_FALSE(cond)  TF_CHECK(!(cond), false, "EXPECT_FALSE(" #cond ") 为真")
-#define EXPECT_EQ(a, b)     TF_CHECK((a) == (b), false, \
-    "EXPECT_EQ(" #a ", " #b ")  实际: " << ::tf::repr(a) << " != " << ::tf::repr(b))
-#define EXPECT_NE(a, b)     TF_CHECK((a) != (b), false, \
-    "EXPECT_NE(" #a ", " #b ")  实际: " << ::tf::repr(a) << " == " << ::tf::repr(b))
-#define EXPECT_LT(a, b)     TF_CHECK((a) <  (b), false, \
-    "EXPECT_LT(" #a ", " #b ")  实际: " << ::tf::repr(a) << " >= " << ::tf::repr(b))
-#define EXPECT_LE(a, b)     TF_CHECK((a) <= (b), false, \
-    "EXPECT_LE(" #a ", " #b ")  实际: " << ::tf::repr(a) << " > "  << ::tf::repr(b))
-#define EXPECT_GT(a, b)     TF_CHECK((a) >  (b), false, \
-    "EXPECT_GT(" #a ", " #b ")  实际: " << ::tf::repr(a) << " <= " << ::tf::repr(b))
-#define EXPECT_GE(a, b)     TF_CHECK((a) >= (b), false, \
-    "EXPECT_GE(" #a ", " #b ")  实际: " << ::tf::repr(a) << " < "  << ::tf::repr(b))
+#define EXPECT_EQ(a, b) TF_BINARY_CHECK(a, b, ==, false, "EXPECT_EQ", " != ")
+#define EXPECT_NE(a, b) TF_BINARY_CHECK(a, b, !=, false, "EXPECT_NE", " == ")
+#define EXPECT_LT(a, b) TF_BINARY_CHECK(a, b, <,  false, "EXPECT_LT", " >= ")
+#define EXPECT_LE(a, b) TF_BINARY_CHECK(a, b, <=, false, "EXPECT_LE", " > ")
+#define EXPECT_GT(a, b) TF_BINARY_CHECK(a, b, >,  false, "EXPECT_GT", " <= ")
+#define EXPECT_GE(a, b) TF_BINARY_CHECK(a, b, >=, false, "EXPECT_GE", " < ")
 
 // ---- 致命检查（失败立即中止本用例，避免后续解引用空指针等崩溃） ------------
 #define ASSERT_TRUE(cond)   TF_CHECK((cond),  true,  "ASSERT_TRUE(" #cond ") 为假")
 #define ASSERT_FALSE(cond)  TF_CHECK(!(cond), true,  "ASSERT_FALSE(" #cond ") 为真")
-#define ASSERT_EQ(a, b)     TF_CHECK((a) == (b), true, \
-    "ASSERT_EQ(" #a ", " #b ")  实际: " << ::tf::repr(a) << " != " << ::tf::repr(b))
-#define ASSERT_NE(a, b)     TF_CHECK((a) != (b), true, \
-    "ASSERT_NE(" #a ", " #b ")  实际: " << ::tf::repr(a) << " == " << ::tf::repr(b))
+#define ASSERT_EQ(a, b) TF_BINARY_CHECK(a, b, ==, true, "ASSERT_EQ", " != ")
+#define ASSERT_NE(a, b) TF_BINARY_CHECK(a, b, !=, true, "ASSERT_NE", " == ")
 
 // ---- 异常检查 --------------------------------------------------------------
 #define EXPECT_THROW(stmt, ExceptionType)                                       \

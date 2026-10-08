@@ -60,7 +60,7 @@ vector 的 `capacity >= size`：多出来的容量是**未构造的生内存**�
 
 ## 如何验证
 ```powershell
-ctest --test-dir build -R C1 --output-on-failure
+ctest --test-dir build -R '^C1_' --output-on-failure
 ```
 测试覆盖：基本 push/下标；容量翻倍（17 个元素 → 容量 32）；`reserve` 后不再分配（数据指针不变）；`pop_back`；`at` 越界抛异常；**深拷贝**（改副本不影响原始）；**移动**掏空源；拷贝/移动赋值；以及用计数类型验证**构造/析构配对、无内存泄漏**。
 

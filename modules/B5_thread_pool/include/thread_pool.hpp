@@ -103,15 +103,15 @@ public:
 
         // ---- 占位实现：不真正排队执行，只返回一个"已就绪但值为默认值"的 future，
         //      好让骨架能编过、测试能跑出红色。实现上面的 TODO 后请整段替换掉。----
-        (void)f;
-        ((void)args, ...);
-        std::promise<R> prom;
-        std::future<R> fut = prom.get_future();
-        if constexpr (std::is_void_v<R>) {
-            prom.set_value();
-        } else {
-            prom.set_value(R{});
+        auto task = std::make_shared<std::packaged_task<R()>>(
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+        std::future<R> fut = task->get_future();
+        {
+            std::lock_guard<std::mutex> lk(mtx_);
+            if (stop_) throw std::runtime_error("submit on stopped ThreadPool");
+            tasks_.emplace([task] { (*task)(); });
         }
+        cv_.notify_one();   
         return fut;
     }
 
@@ -137,7 +137,18 @@ private:
     // ===============================================================
     void worker_loop() {
         // TODO: 实现工作线程主循环（占位：空函数体 → 线程会立刻退出，
-        //       此时提交的任务无人执行，测试因此变红；不会卡死，可安全析构）。
+        for (;;) {
+            std::function<void()> task;
+            {
+                std::unique_lock<std::mutex> lk(mtx_);
+                cv_.wait(lk, [this] { return stop_ || !tasks_.empty(); });
+                if (stop_ && tasks_.empty()) return;
+                task = std::move(tasks_.front());
+                tasks_.pop();
+            }
+            //       此时提交的任务无人执行，测试因此变红；不会卡死，可安全析构）。
+            task();
+        }
     }
 
     std::vector<std::thread> workers_;          // 工作线程

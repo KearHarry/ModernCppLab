@@ -67,7 +67,10 @@ public:
     //   "加锁"之前——acquire 正是这个语义，和 unlock 的 release 配对。
     // ===============================================================
     void lock() noexcept {
-        // TODO
+        while (flag_.test_and_set(std::memory_order_acquire)) {
+            // 抢锁失败（返回 true 表示之前已被占用），原地转圈重试。
+            // 进阶可加 _mm_pause()/std::this_thread::yield() 降低总线压力，这里从简。
+        }
     }
 
     // ===================== TODO(B3-2) unlock =========================
@@ -76,7 +79,7 @@ public:
     //   下一个 acquire 到锁的线程可见。
     // ===============================================================
     void unlock() noexcept {
-        // TODO
+        flag_.clear(std::memory_order_release);
     }
 
     // ===================== TODO(B3-3) try_lock =======================
@@ -86,8 +89,7 @@ public:
     //   （test_and_set 返回旧值：旧值 false=没人占→我抢到了→取反返回 true）
     // ===============================================================
     bool try_lock() noexcept {
-        // TODO
-        return true;  // ← 占位：当前实现会"假装"总是抢到锁
+        return !flag_.test_and_set(std::memory_order_acquire);
     }
 
 private:
@@ -128,7 +130,13 @@ inline long atomic_fetch_max(std::atomic<long>& target, long value) noexcept {
     //   false），所以必须放在循环里用；换来的是更高效。compare_exchange_strong
     //   不会伪失败，但单次开销略大——循环场景里通常用 weak。
     // =====================================================
-    return target.load();  // ← 占位
+    long cur = target.load(std::memory_order_relaxed);
+    while (value > cur) {
+        if (target.compare_exchange_weak(cur, value, std::memory_order_acq_rel, std::memory_order_relaxed)) {
+            break;
+        }
+    }
+    return cur;
 }
 
 } // namespace cppbc

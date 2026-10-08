@@ -90,16 +90,13 @@ public:
     //   clone() : return std::make_unique<Circle>(*this);  // 克隆出同类型新对象
     // ===============================================================
     double area() const override {
-        // TODO
-        return 0.0;
+        return kPi * r_ * r_;
     }
     const char* name() const override {
-        // TODO
-        return "?";
+        return "Circle";
     }
     std::unique_ptr<Shape> clone() const override {
-        // TODO
-        return nullptr;
+        return std::make_unique<Circle>(*this);
     }
 
     double radius() const noexcept { return r_; }
@@ -125,16 +122,14 @@ public:
     //   clone() : return std::make_unique<Rect>(*this);
     // ===============================================================
     double area() const override {
-        // TODO
-        return 0.0;
+        return w_ * h_;
     }
     const char* name() const override {
-        // TODO
+        return "Rect";
         return "?";
     }
     std::unique_ptr<Shape> clone() const override {
-        // TODO
-        return nullptr;
+        return std::make_unique<Rect>(*this);       
     }
 
     double width()  const noexcept { return w_; }
@@ -151,9 +146,10 @@ private:
 //   return sum;
 // ===============================================================
 inline double total_area(const std::vector<std::unique_ptr<Shape>>& shapes) {
-    // TODO
+    double sum = 0.0;
+    for (const auto& s : shapes) sum += s->area();
+    return sum;
     (void)shapes;
-    return 0.0;
 }
 
 // ===================== TODO(D4-4) circle_radius_or ===============
@@ -164,7 +160,9 @@ inline double total_area(const std::vector<std::unique_ptr<Shape>>& shapes) {
 // ===============================================================
 inline double circle_radius_or(const Shape& s, double fallback) {
     // TODO
-    (void)s;
+    if  (const Circle* c = dynamic_cast<const Circle*>(&s)) {
+        return c->radius();
+    }
     return fallback;
 }
 

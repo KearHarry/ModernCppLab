@@ -62,8 +62,9 @@ public:
     //     return nullptr;                               // 整条链都没有 → 没找到
     // =================================================================
     V* find(const K& key) {
-        // TODO
-        (void)key;
+        auto& chain = buckets_[bucket_index_(key)];
+        for (auto& kv : chain)
+            if (kv.first == key) return &kv.second;
         return nullptr;
     }
 
@@ -84,9 +85,13 @@ public:
     // =================================================================
     V& operator[](const K& key) {
         // TODO：骨架先返回一个共享的"假"引用，保证不崩溃（size_ 仍为 0 → 测试会先红）
-        (void)key;
-        static V dummy{};
-        return dummy;
+        if (V* p = find(key)) return *p;    
+        if (static_cast<float>(size_ + 1) / buckets_.size() > max_load_factor_)
+            rehash(buckets_.size() * 2);
+        std::size_t idx = bucket_index_(key);
+        buckets_[idx].emplace_back(key, V{});
+        ++size_;
+        return buckets_[idx].back().second;
     }
 
     // ===================== TODO(C4-3) erase ==========================
@@ -102,8 +107,14 @@ public:
     //   return false;
     // =================================================================
     bool erase(const K& key) {
-        // TODO
-        (void)key;
+        auto& chain = buckets_[bucket_index_(key)];
+        for (auto it = chain.begin(); it != chain.end(); ++it) {
+            if (it->first == key) {
+                chain.erase(it);
+                --size_;
+                return true;
+            }
+        }
         return false;
     }
 
@@ -118,8 +129,14 @@ public:
     //   buckets_ = std::move(new_buckets);           // 用新桶数组替换旧的
     // =================================================================
     void rehash(std::size_t new_bucket_count) {
-        // TODO
-        (void)new_bucket_count;
+        std::vector<std::list<std::pair<K,V>>> new_buckets(new_bucket_count);
+        for (auto& chain : buckets_){
+            for (auto& kv : chain){
+                std::size_t idx = hash_(kv.first) % new_bucket_count;
+                new_buckets[idx].push_back(std::move(kv));
+            }
+        }
+        buckets_ = std::move(new_buckets);
     }
 
     // ---- 下面是已给出的部分，无需修改 ----

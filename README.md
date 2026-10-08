@@ -2,14 +2,15 @@
 
 > 一个 **MIT 课程作业式** 的现代 C++ 自学框架。每个模块给你一套带 `TODO` 的代码骨架和一组测试用例——你读知识点讲解、亲手填空实现、跑测试验证。在「红变绿」的过程中，把腾讯 / 字节 / 米哈游等大厂的高频考点真正吃透。
 
-本仓库**不教语法基础**（变量、循环、`cout` 那些）。它聚焦四件事：
+本仓库**不教语法基础**（变量、循环、`cout` 那些）。它聚焦五件事：
 
-- **现代 C++ 特性**（C++11 → C++20）：移动语义、智能指针、模板元编程、类型擦除、`optional`、协程……
-- **并发编程**：读写锁、条件变量、原子与内存序、无锁结构、线程池……
-- **STL 底层实现**：手写 `vector` / `string(SSO)` / `unordered_map` / 跳表 / 侵入式链表……
-- **经典工程题与对象模型 + 引擎设施**：LRU、内存池、单例、vtable、Pimpl、Slot Map、帧分配器、信号-槽……
+- **现代 C++ 特性**（C++11 → C++20）：移动语义、智能指针、模板、类型推导、`variant`、异常安全、协程……
+- **并发编程**：读写锁、条件变量、原子与内存模型、线程生命周期、取消、无锁结构、线程池……
+- **STL 底层实现**：手写 `vector` / `deque` / 红黑树 / 哈希表，理解 allocator、迭代器与 ranges……
+- **经典工程题与对象模型**：LRU、单例、vtable、对象布局、类型转换、编译链接、ODR 与 ABI……
+- **引擎 / 游戏设施**：Slot Map、帧分配器、信号-槽、数据导向设计、Sparse Set / ECS……
 
-> 共 **5 个轨道 · 26 个模块**，每个模块都配有详尽的知识点讲解、带原理注释的 `TODO` 骨架、测试用例，以及一组带**参考答案**的「面试追问」。
+> 共 **5 个轨道 · 41 个模块**，每个模块都配有知识点讲解、带原理注释的 `TODO` 骨架、测试用例，以及一组带**参考答案**的「面试追问」。
 
 ---
 
@@ -20,7 +21,7 @@
 1. **读模块的 `README.md`** —— 知识点背景、为什么大厂爱考、要实现什么、有哪些坑。
 2. **读源码里的 `TODO`** —— 每个 `TODO` 都详细描述了「要做什么 + 背后的原理 + 关键步骤」，读完应当能独立写出实现。
 3. **动手实现** —— 把 `TODO` 处的桩代码替换成你的实现。
-4. **跑测试** —— `ctest -R <模块号>`，看红色断言一个个变绿。
+4. **跑测试** —— `ctest -R '^<模块号>_'`，用带边界的正则只选中该模块，看红色断言一个个变绿。
 5. **答追问** —— 每个模块 `README` 末尾有「面试追问 + 参考答案」，先自己讲一遍，再对答案查漏补缺。
 
 > 骨架代码**开箱即能编译**（桩函数返回占位值），所以你一开始就能跑测试看到「全红」，然后逐步实现、逐步变绿，不会卡在编译错误上。
@@ -29,7 +30,7 @@
 
 ## 环境与构建
 
-需要：支持 C++20 的编译器（g++ ≥ 11 / clang ≥ 14 / MSVC 2022）、CMake ≥ 3.20。
+需要：支持 C++20 的编译器（g++ ≥ 11 / clang ≥ 14 / MSVC 2022）、CMake ≥ 3.20；D8 还会调用同一工具链中的 C11 编译器来验证真实 C 互操作（MinGW/Clang/MSVC 套件均自带）。
 本仓库在 **MinGW-w64 g++ 14.1 + CMake 3.30** 上验证通过。
 
 ```powershell
@@ -43,7 +44,7 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 
 # 只跑某个模块（按测试名前缀过滤，例如 A1 / B5 / E2）
-ctest --test-dir build -R A1 --output-on-failure
+ctest --test-dir build -R '^A1_' --output-on-failure
 
 # 也可直接运行单个测试可执行文件，输出更详细：
 ./build/modules/A1_move_semantics/A1_move_semantics.exe   # Windows
@@ -74,6 +75,10 @@ cmake -S . -B build -G "Ninja"
 | [A4](modules/A4_type_erasure) | 类型擦除 / 手写 `std::function` | ⭐⭐⭐ | 类型擦除、小对象优化(SBO)、虚表 vs 函数指针、统一存储任意可调用物 |
 | [A5](modules/A5_optional) | 手写 `Optional<T>` | ⭐⭐⭐ | 手动生命周期、placement new、aligned storage、显式析构、值语义 |
 | [A6](modules/A6_coroutine_generator) | C++20 协程 `Generator<T>` | ⭐⭐⭐⭐ | `coroutine_handle`、`promise_type`、`co_yield`、惰性求值、挂起/恢复 |
+| [A7](modules/A7_type_deduction) | 类型推导与重载决议 | ⭐⭐⭐ | `auto`/`decltype(auto)`、模板推导、数组退化、重载选择 |
+| [A8](modules/A8_variant_visit) | 手写 `Variant<int, string>` | ⭐⭐⭐⭐ | tagged union、活跃成员、placement new、`visit`、异常状态 |
+| [A9](modules/A9_exception_safety) | 异常安全与 Scope Guard | ⭐⭐⭐⭐ | 栈展开、RAII、基本/强/不抛保证、事务式提交 |
+| [A10](modules/A10_lambda_invoke) | Lambda 与统一调用 | ⭐⭐⭐ | 捕获与生命周期、泛型 lambda、`std::invoke`、成员指针 |
 
 ### B 轨 · 并发编程
 | 模块 | 主题 | 难度 | 核心考点 |
@@ -83,6 +88,8 @@ cmake -S . -B build -G "Ninja"
 | [B3](modules/B3_atomics_memory_order) | 原子操作与内存序 | ⭐⭐⭐ | `atomic`、CAS、自旋锁、`memory_order` acquire/release、SPSC 环形缓冲 |
 | [B4](modules/B4_lockfree_stack) | 无锁栈 Treiber Stack | ⭐⭐⭐⭐ | CAS 循环、ABA 问题、tagged pointer、无锁内存回收难题 |
 | [B5](modules/B5_thread_pool) | 线程池 | ⭐⭐⭐ | 任务队列、`future`/`packaged_task`、`submit` 泛型接口、优雅停机 |
+| [B6](modules/B6_thread_lifecycle) | 线程生命周期、取消与死锁 | ⭐⭐⭐ | `jthread`/`stop_token`、RAII join、锁顺序、`scoped_lock` |
+| [B7](modules/B7_memory_model) | 内存模型推理实验 | ⭐⭐⭐⭐ | data race、happens-before、release/acquire、fence、发布协议 |
 
 ### C 轨 · STL 底层实现
 | 模块 | 主题 | 难度 | 核心考点 |
@@ -93,6 +100,10 @@ cmake -S . -B build -G "Ninja"
 | [C4](modules/C4_hash_table) | 手写 `unordered_map` | ⭐⭐⭐⭐ | 链地址法、负载因子、rehash、冲突、迭代器失效 |
 | [C5](modules/C5_intrusive_list) | 侵入式双向链表 | ⭐⭐⭐⭐ | 侵入式节点、零额外分配、O(1) 删除、hook、生命周期 |
 | [C6](modules/C6_skip_list) | 跳表 SkipList | ⭐⭐⭐⭐⭐ | 概率平衡、多层索引、O(log n) 查找、范围查询（Redis zset） |
+| [C7](modules/C7_red_black_tree) | 红黑树 / 有序集合 | ⭐⭐⭐⭐⭐ | 旋转、插入修复、黑高不变量、`lower_bound` |
+| [C8](modules/C8_deque) | 分段式 `deque` | ⭐⭐⭐⭐ | map-of-blocks、双端扩张、随机访问、跨块边界 |
+| [C9](modules/C9_allocator_pmr) | Allocator 与 PMR | ⭐⭐⭐⭐ | `allocator_traits`、rebind、有状态 allocator、`memory_resource`、对齐 |
+| [C10](modules/C10_iterators_ranges) | 迭代器、算法与 Ranges | ⭐⭐⭐ | iterator concept、半开区间、projection、`lower_bound` |
 
 ### D 轨 · 经典工程题与对象模型
 | 模块 | 主题 | 难度 | 核心考点 |
@@ -102,6 +113,9 @@ cmake -S . -B build -G "Ninja"
 | [D3](modules/D3_singleton) | 线程安全单例 | ⭐⭐⭐ | Meyers 单例、`call_once`、双检锁陷阱、静态初始化顺序 |
 | [D4](modules/D4_object_model) | 虚函数与对象模型 | ⭐⭐⭐ | vtable/vptr、虚析构、`clone`/原型模式、RTTI、对象切片 |
 | [D5](modules/D5_pimpl) | Pimpl 编译防火墙 | ⭐⭐⭐ | 不完整类型、编译解耦、ABI 稳定、析构/移动的定义点 |
+| [D6](modules/D6_lifetime_layout) | 生命周期与对象布局 | ⭐⭐⭐⭐ | 初始化/析构顺序、临时量、padding、alignment、EBO |
+| [D7](modules/D7_casts_type_safety) | 四种转换与类型安全 | ⭐⭐⭐ | `static/dynamic/const/reinterpret_cast`、RTTI、指针调整 |
+| [D8](modules/D8_compilation_linking) | 编译、链接、ODR 与 ABI | ⭐⭐⭐⭐ | 翻译单元、linkage、`inline`、符号、`extern "C"` |
 
 ### E 轨 · 引擎 / 游戏常用设施
 | 模块 | 主题 | 难度 | 核心考点 |
@@ -110,6 +124,8 @@ cmake -S . -B build -G "Ninja"
 | [E2](modules/E2_arena_allocator) | 线性 / 竞技场 / 帧分配器 | ⭐⭐⭐ | bump 指针、按帧 `reset`、`marker`/`rewind`、对齐、数据导向设计 |
 | [E3](modules/E3_delegate) | 多播委托 / 信号-槽 | ⭐⭐⭐ | 事件解耦、`std::function` 槽、连接凭证、观察者模式工业形态 |
 | [E4](modules/E4_string_id) | 编译期字符串哈希 ID | ⭐⭐⭐ | FNV-1a、`constexpr`、UDL `operator""_id`、当 `switch` 标签 |
+| [E5](modules/E5_data_oriented_design) | 数据导向设计 | ⭐⭐⭐⭐ | AoS/SoA、局部性、批处理、确定性访问/分配计数 |
+| [E6](modules/E6_sparse_set_ecs) | Sparse Set / ECS 存储 | ⭐⭐⭐ | sparse-dense 映射、swap-and-pop、连续组件遍历 |
 
 ---
 
@@ -124,6 +140,10 @@ cmake -S . -B build -G "Ninja"
 - [ ] A4 类型擦除 / std::function
 - [ ] A5 Optional&lt;T&gt;
 - [ ] A6 C++20 协程 Generator
+- [ ] A7 类型推导与重载决议
+- [ ] A8 Variant 与 visit
+- [ ] A9 异常安全与 Scope Guard
+- [ ] A10 Lambda 与统一调用
 
 **B 轨 · 并发编程**
 - [ ] B1 读写锁 RWLock
@@ -131,6 +151,8 @@ cmake -S . -B build -G "Ninja"
 - [ ] B3 原子操作与内存序
 - [ ] B4 无锁栈 Treiber Stack
 - [ ] B5 线程池
+- [ ] B6 线程生命周期、取消与死锁
+- [ ] B7 内存模型推理实验
 
 **C 轨 · STL 底层实现**
 - [ ] C1 手写 vector
@@ -139,6 +161,10 @@ cmake -S . -B build -G "Ninja"
 - [ ] C4 手写 unordered_map
 - [ ] C5 侵入式链表
 - [ ] C6 跳表 SkipList
+- [ ] C7 红黑树 / 有序集合
+- [ ] C8 分段式 deque
+- [ ] C9 Allocator 与 PMR
+- [ ] C10 迭代器、算法与 Ranges
 
 **D 轨 · 经典工程题与对象模型**
 - [ ] D1 LRU 缓存
@@ -146,12 +172,17 @@ cmake -S . -B build -G "Ninja"
 - [ ] D3 线程安全单例
 - [ ] D4 虚函数与对象模型
 - [ ] D5 Pimpl 编译防火墙
+- [ ] D6 生命周期与对象布局
+- [ ] D7 四种转换与类型安全
+- [ ] D8 编译、链接、ODR 与 ABI
 
 **E 轨 · 引擎 / 游戏常用设施**
 - [ ] E1 生成式句柄池 Slot Map
 - [ ] E2 线性 / 帧分配器
 - [ ] E3 多播委托 / 信号-槽
 - [ ] E4 编译期字符串哈希 ID
+- [ ] E5 数据导向设计
+- [ ] E6 Sparse Set / ECS 存储
 
 ---
 
@@ -169,19 +200,34 @@ ModernCppLab/
 │   ├── build.ps1             # Windows 一键构建 + 测试
 │   └── build.sh              # Linux/Mac 一键构建 + 测试
 └── modules/
-    └── <模块名>/
+    └── <模块名>/             # 当前共 41 个，按 A/B/C/D/E 五轨编号
         ├── README.md         # 知识点讲解 + 任务说明 + 面试追问（含参考答案）
         ├── include/*.hpp     # 带 TODO 的代码骨架（你在这里实现）
-        ├── src/*.cpp         # （部分模块有）非模板实现文件
+        ├── src/*.{cpp,c}     # （部分模块有）非模板实现；D8 含真实 C 调用方
         ├── tests/*.cpp       # 测试用例（你的实现要让它们全部通过）
         └── CMakeLists.txt    # 模块构建（一行 add_module_test）
 ```
 
 ---
 
+## 推荐学习路线
+
+41 个模块不必机械地从 A1 一路刷到 E6。先完成通用核心，再按目标岗位分流：
+
+| 路线 | 推荐顺序 | 适合方向 |
+|---|---|---|
+| 通用 C++ 面试主线 | A1 → A2 → A7 → A9 → C1 → C4 → C7 → C9 → D3 → D4 → D6 → D7 → D8 → B2 → B3 → B6 → B7 | 所有 C++ 岗位的核心盘 |
+| 后端 / 基础架构 | 主线后：B1 → B4 → B5 → C6 → C8 → C10 → D1 → D5 | 服务端、存储、基础库 |
+| 游戏 / 引擎 | 主线后：C2 → C3 → C5 → E1 → E2 → E3 → E4 → E5 → E6 | 客户端、引擎、实时仿真 |
+| 现代语言进阶 | A3 → A4 → A5 → A8 → A10 → A6 → D2 | 框架、泛型库、语言深挖 |
+
+每完成一个模块都建议做三次输出：让测试变绿；不用看答案讲清 README 追问；隔一周从空白重新写关键 API。性能实验只断言访问次数、分配次数和布局等确定性性质，不用不稳定的“耗时必须更短”做单元测试。
+
+---
+
 ## 关于「面试追问」
 
-每个模块 README 末尾都有 8 道**面试追问**，并附**参考答案**——覆盖原理、取舍、翻车场景与扩展方向。建议先盖住答案自己讲，再对照查漏。这部分是把「会写」升级为「讲得清」的关键，也是面试现场真正拉开差距的地方。
+每个模块 README 末尾都有一组**面试追问**，并附**参考答案**——覆盖原理、取舍、翻车场景与扩展方向。建议先盖住答案自己讲，再对照查漏。这部分是把「会写」升级为「讲得清」的关键，也是面试现场真正拉开差距的地方。
 
 ---
 

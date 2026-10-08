@@ -102,7 +102,10 @@ public:
     //    }
     // ===============================================================
     void reset() noexcept {
-        // TODO
+        if(engaged_) {
+            value_.~T();
+            engaged_ = false;
+        }
     }
 
     // ===================== TODO(A5-2) emplace =======================
@@ -114,9 +117,10 @@ public:
     // ===============================================================
     template <class... Args>
     T& emplace(Args&&... args) {
-        // TODO
-        ((void)args, ...);
-        return value_;   // 骨架：未真正构造（engaged_ 仍为 false，靠 has_value 挡住访问）
+        reset();
+        ::new (static_cast<void*>(&value_)) T(std::forward<Args>(args)...);
+        engaged_ = true;
+        return value_;
     }
 
     // ===================== TODO(A5-3) 拷贝构造 ======================
@@ -128,8 +132,10 @@ public:
     //  （也可直接写成 `if (other.engaged_) emplace(other.value_);`，复用 A5-2。）
     // ===============================================================
     Optional(const Optional& other) {
-        // TODO
-        (void)other;
+        if(other.engaged_) {
+            ::new (static_cast<void*>(&value_)) T(other.value_);
+            engaged_ = true;
+        }
     }
 
     // ---- 以下均已给好 ----
